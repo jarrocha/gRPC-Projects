@@ -1,0 +1,31 @@
+// Protofile for web calculator
+syntax = "proto3";
+
+option go_package = "calcpb";
+
+enum Operand {
+    UNKNOWN = 0;
+    SUM = 1;
+    SUB = 2;
+    MUL = 3;
+    DIV = 4;
+}
+
+message Operation {
+    Operand operator = 1;
+    float number1 = 2;
+    float number2 = 3;
+}
+
+message OperRequest {
+    Operation Operation = 1;
+}
+
+message OperRespond {
+    float Result = 1;
+}
+
+service OperService {
+    // Unary API
+    rpc Calculate(OperRequest) returns (OperRespond) {};
+}
