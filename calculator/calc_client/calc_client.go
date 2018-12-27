@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var server_result chan float64
+var server_result = make(chan float64)
 
 func parseOperator(in string) calcpb.Operand {
 
@@ -31,13 +31,18 @@ func parseOperator(in string) calcpb.Operand {
 	}
 }
 
+func printResult() {
+	for res := range server_result {
+		fmt.Printf("Result: %g\n", res)
+	}
+}
+
 func doRequest(client calcpb.OperServiceClient) {
 
 	var num1, num2 float64
 	var oper string
 	var operand calcpb.Operand
 
-	fmt.Printf("Enter operation with spaces: ")
 	scanner := bufio.NewScanner(os.Stdin)
 
 	if scanner.Scan() {
@@ -68,7 +73,7 @@ func doRequest(client calcpb.OperServiceClient) {
 		log.Println("Response error", err)
 	}
 
-	fmt.Println(response.GetResult())
+	server_result <- response.GetResult()
 }
 
 func main() {
@@ -81,6 +86,9 @@ func main() {
 
 	client := calcpb.NewOperServiceClient(conn)
 
+	go printResult()
+
+	fmt.Printf("Enter operation with spaces in between.")
 	for {
 		doRequest(client)
 	}
