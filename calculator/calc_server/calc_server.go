@@ -5,23 +5,23 @@ import (
 	"log"
 	"net"
 
-	"github.com/jarrocha/grpc-go/calculator/calcpb"
+	"github.com/jarrocha/go_grpc/calculator/calcpb"
 	"google.golang.org/grpc"
 )
 
-func performSum(x, y float32) float32 {
+func performSum(x, y float64) float64 {
 	return x + y
 }
 
-func performSub(x, y float32) float32 {
+func performSub(x, y float64) float64 {
 	return x - y
 }
 
-func performMul(x, y float32) float32 {
+func performMul(x, y float64) float64 {
 	return x * y
 }
 
-func performDiv(x, y float32) float32 {
+func performDiv(x, y float64) float64 {
 	if y == 0 {
 		return 0
 	}
@@ -32,7 +32,7 @@ func performDiv(x, y float32) float32 {
 type calcService struct{}
 
 func (c *calcService) Calculate(ctx context.Context, in *calcpb.OperRequest) (*calcpb.OperRespond, error) {
-	var result float32
+	var result float64
 	resp := &calcpb.OperRespond{Result: result}
 	oper := in.GetOperation().GetOperator()
 	num1 := in.GetOperation().GetNumber1()
