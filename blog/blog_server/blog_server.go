@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mongodb/mongo-go-driver/bson"
 	"github.com/mongodb/mongo-go-driver/bson/primitive"
 	"github.com/mongodb/mongo-go-driver/mongo"
 
@@ -62,6 +63,81 @@ func (*blogServer) CreateBlog(ctx context.Context,
 			Content:  blog.GetContent(),
 		},
 	}, nil
+}
+
+func (*blogServer) ReadBlog(ctx context.Context,
+	req *blogpb.ReadBlogRequest) (*blogpb.ReadBlogResponse, error) {
+
+	log.Println("Read blog request received.")
+
+	blog_id := req.GetBlogId()
+	log.Println(blog_id)
+
+	oid, err := primitive.ObjectIDFromHex(blog_id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintln("Cannot parse blog id"))
+	}
+
+	filter := bson.M{"_id": oid}
+	//filter := bsonx.Doc{{Key: "_id", Value: bsonx.ObjectID(oid)}}
+	log.Println(filter)
+
+	res := collection.FindOne(context.Background(), filter)
+	data := &blogItem{}
+	derr := res.Decode(data)
+	if derr != nil {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintln("Cannot find from blog id: ", derr))
+	}
+
+	return &blogpb.ReadBlogResponse{
+		Blog: dataToBlobpb(data),
+	}, nil
+
+}
+
+func (*blogServer) UpdateBlog(ctx context.Context,
+	req *blogpb.UpdateBlogRequest) (*blogpb.UpdateBlogResponse, error) {
+
+	log.Println("Update blog request received.")
+
+	blog := req.GetBlog()
+	blog_id := blog.GetId()
+
+	oid, err := primitive.ObjectIDFromHex(blog_id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintln("Cannot parse blog id"))
+	}
+
+	// finc by object id
+	filter := bson.M{"_id": oid}
+	res := collection.FindOne(context.Background(), filter)
+	data := &blogItem{}
+
+	if derr := res.Decode(data); derr != nil {
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintln("Cannot find from blog id: ", derr))
+	}
+
+	data.AuthorID = blog.GetAuthorId()
+	data.Content = blog.GetContent()
+	data.Title = blog.GetTitle()
+
+	_, uerr := collection.ReplaceOne(context.Background(), filter, data)
+	if uerr != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintln("Cannot update object: ", uerr))
+	}
+
+	return &blogpb.UpdateBlogResponse{
+		Blog: dataToBlobpb(data),
+	}, nil
+}
+
+func dataToBlobpb(data *blogItem) *blogpb.Blog {
+	return &blogpb.Blog{
+		AuthorId: data.AuthorID,
+		Content:  data.Content,
+		Title:    data.Title,
+		Id:       data.ID.Hex(),
+	}
 }
 
 func shutdownServer(li net.Listener, s *grpc.Server) {
