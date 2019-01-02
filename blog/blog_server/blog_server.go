@@ -18,6 +18,7 @@ import (
 
 	"github.com/jarrocha/go_grpc/blog/blogpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var collection *mongo.Collection
@@ -131,6 +132,58 @@ func (*blogServer) UpdateBlog(ctx context.Context,
 	}, nil
 }
 
+func (*blogServer) DeleteBlog(ctx context.Context,
+	req *blogpb.DeleteBlogRequest) (*blogpb.DeleteBlogResponse, error) {
+
+	log.Println("Delete blog request received.")
+
+	oid, err := primitive.ObjectIDFromHex(req.GetBlogId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintln("Cannot parse blog id"))
+	}
+
+	filter := bson.M{"_id": oid}
+
+	_, derr := collection.DeleteOne(context.Background(), filter)
+	if derr != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintln("Cannot delete from blog id: ", derr))
+	}
+
+	return &blogpb.DeleteBlogResponse{BlogId: req.GetBlogId()}, nil
+}
+
+func (*blogServer) ListBlog(req *blogpb.ListBlogRequest, stream blogpb.BlogService_ListBlogServer) error {
+
+	log.Println("List  blog request received.")
+
+	cursor, find_err := collection.Find(context.Background(), nil)
+	if find_err != nil {
+		return status.Errorf(codes.Internal, fmt.Sprintln("Cannot find blogs"))
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		data := &blogItem{}
+
+		decode_err := cursor.Decode(data)
+		if decode_err != nil {
+			return status.Errorf(codes.Internal, fmt.Sprintln("Cannot decode blog"))
+		}
+
+		resp := &blogpb.ListBlogResponse{
+			Blog: dataToBlobpb(data),
+		}
+
+		stream.Send(resp)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return status.Errorf(codes.Internal, fmt.Sprintln("Cursor error", err))
+	}
+
+	return nil
+}
+
 func dataToBlobpb(data *blogItem) *blogpb.Blog {
 	return &blogpb.Blog{
 		AuthorId: data.AuthorID,
@@ -179,6 +232,9 @@ func main() {
 	opts := []grpc.ServerOption{}
 	srv := grpc.NewServer(opts...)
 	blogpb.RegisterBlogServiceServer(srv, &blogServer{})
+
+	// Register reflection service on gRPC server.
+	reflection.Register(srv)
 
 	go func() {
 		log.Println("Blog Server started")

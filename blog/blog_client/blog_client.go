@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/jarrocha/go_grpc/blog/blogpb"
@@ -45,9 +46,10 @@ func main() {
 	}
 
 	// update blog
+	blog_id := resp.GetBlog().GetId()
 	req3 := &blogpb.UpdateBlogRequest{
 		Blog: &blogpb.Blog{
-			Id:       resp.GetBlog().GetId(),
+			Id:       blog_id,
 			AuthorId: "Deckard Cain",
 			Title:    "Deckard Cain Story",
 			Content:  "Last of the Horadrim",
@@ -58,6 +60,38 @@ func main() {
 		log.Println("\nError reading post", err3)
 	} else {
 		fmt.Println("\nPost updated successully!!\n", resp3)
+	}
+
+	// delete blog
+	req4 := &blogpb.DeleteBlogRequest{
+		BlogId: blog_id,
+	}
+	resp4, err4 := c.DeleteBlog(context.Background(), req4)
+	if err4 != nil {
+		log.Println("\nError deleting post", err4)
+	} else {
+		fmt.Println("\nPost deleted successully!!\n", resp4)
+	}
+
+	// list blog
+	listStream, err5 := c.ListBlog(context.Background(), &blogpb.ListBlogRequest{})
+	if err5 != nil {
+		log.Println("\nError listing blogs", err5)
+	} else {
+		fmt.Println("\nListing all blogs in database")
+		for {
+			resp, recv_err := listStream.Recv()
+			if recv_err != nil {
+				if recv_err == io.EOF {
+					break
+				}
+				log.Println("ListBlog RPC Stream receive error", recv_err)
+			}
+
+			if resp != nil {
+				fmt.Println(resp.GetBlog())
+			}
+		}
 	}
 
 }
