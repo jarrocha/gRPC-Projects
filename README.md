@@ -1,8 +1,9 @@
 ## Motivation
-This is a collection of small project to understand the theory and implementation of gRPC. These programs are a work in progress.
+This is a collection of small project to understand the theory and implementation of gRPC. The main program is the blog program which is a implements gRPC unary and streaming services. It is still in an initial phase and under improvement.
 
 ## Table of Contents
 - [Blog Program](#blog-program)
+- [Improvements](#improvements)
 
 ## What is gRPC?
 It is a free and open-source RPC protocol framework developed by Google and other companies. 
@@ -34,3 +35,10 @@ service BlogService {
     rpc ListBlog (ListBlogRequest) returns (stream ListBlogResponse);
 }
 ```
+
+## Improvements
+- Better client interface.
+- Better blog presentation.
+- Encryption
+- Docker and Kubernetes deployment example
+
