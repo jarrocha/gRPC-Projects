@@ -1,5 +1,5 @@
 ## Motivation
-This is a collection of small project to understand the theory and implementation of gRPC. The main program is the blog program which is a implements gRPC unary and streaming services. It is still in an initial phase and under improvement.
+This is a collection of small project to understand the theory and implementation of gRPC. The main program is the blog program which is a implements gRPC unary and streaming services through a CRUD API to interact with a local MongoDB database. It is still in an initial phase and under improvement.
 
 ## Table of Contents
 - [Blog Program](#blog-program)
