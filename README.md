@@ -3,6 +3,7 @@ This is a collection of small project to understand the theory and implementatio
 
 ## Table of Contents
 - [Blog Program](#blog-program)
+- [Output](#output)
 - [Improvements](#improvements)
 
 ## What is gRPC?
@@ -33,6 +34,42 @@ service BlogService {
     rpc UpdateBlog (UpdateBlogRequest) returns (UpdateBlogResponse);    // can return NOT_FOUND
     rpc DeleteBlog (DeleteBlogRequest) returns (DeleteBlogResponse);    // can return NOT_FOUND
     rpc ListBlog (ListBlogRequest) returns (stream ListBlogResponse);
+}
+```
+
+## Output
+The following output is done using the [evans](https://github.com/ktr0731/evans) cli.
+```
+default@127.0.0.1:8000> show service
++-------------+------------+-------------------+--------------------+
+|   SERVICE   |    RPC     |    REQUESTTYPE    |    RESPONSETYPE    |
++-------------+------------+-------------------+--------------------+
+| BlogService | CreateBlog | CreateBlogRequest | CreateBlogResponse |
+|             | ReadBlog   | ReadBlogRequest   | ReadBlogResponse   |
+|             | UpdateBlog | UpdateBlogRequest | UpdateBlogResponse |
+|             | DeleteBlog | DeleteBlogRequest | DeleteBlogResponse |
+|             | ListBlog   | ListBlogRequest   | ListBlogResponse   |
++-------------+------------+-------------------+--------------------+
+```
+
+Checking current database content:
+```
+default.BlogService@127.0.0.1:8000> call ListBlog
+{
+  "blog": {
+    "id": "5c2c186c23ba3c54a83c4e9a",
+    "authorId": "Jaime Arrocha",
+    "title": "New Blog Post",
+    "content": "Test content for blog."
+  }
+}
+{
+  "blog": {
+    "id": "5c2c5552fe22cfc08f5c0f67",
+    "authorId": "Deckard Cain",
+    "title": "Deckard Cain Story",
+    "content": "Last of the Horadrim"
+  }
 }
 ```
 
